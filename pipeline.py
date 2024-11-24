@@ -2,10 +2,11 @@ import pandas as pd
 import random
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import RandomOverSampler
-from sklearn.preprocessing import PowerTransformer, MinMaxScaler
-from sklearn.impute import KNNImputer, SimpleImputer
+from sklearn.impute import KNNImputer
 from pipeline_tools import *
 from skorch import NeuralNetBinaryClassifier
+import torch.optim as optim
+import joblib
 
 df = pd.read_csv('weatherAUS.csv')
 df[df['Location'] == 'MountGini']['Location'] = 'MountGinini'
@@ -50,4 +51,9 @@ transform_pipeline = Pipeline(steps=[
     ('knn_imputer',  KNNImputer(n_neighbors=155)),
     ('float32', FunctionTransformer(func=lambda X: torch.tensor(X, dtype=torch.float32),validate=False)),
     ('model' model.initialize())
-])
+    ])
+
+transform_pipeline.fit(X_train, y_train)
+
+joblib.dump(transform_pipeline, 'pipeline_final.pkl')
+

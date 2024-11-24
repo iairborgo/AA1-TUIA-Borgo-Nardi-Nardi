@@ -1,6 +1,9 @@
 import pandas as pd
 from math import sin, cos, pi
 from sklearn.base import BaseEstimator, TransformerMixin
+import torch
+import torch.nn as nn
+from sklearn.preprocessing import PowerTransformer
 
 class BinaryEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, column, drop_initial = False):
@@ -53,7 +56,7 @@ class CustomPowerTransformer(BaseEstimator, TransformerMixin):
       
     def transform(self, X):
       df = X.copy()
-      df[cols] = self.scaler.transform(df[cols])
+      df[self.cols] = self.scaler.transform(df[self.cols])
       return df
 
 def drop_columns(X, columns):
@@ -96,3 +99,52 @@ def impute_scale_cloud(X):
   X = X.apply(impute_cloud_toapply, axis = 1)
   X['Cloud9am'] /= 8
   X['Cloud3pm'] /= 8
+
+'''
+best_params = {
+    "n_hidden": 4,
+    "n_units_l0": 4,
+    "dropout_l0": 0.4398398657839898,
+    "n_units_l1": 12,
+    "dropout_l1": 0.4571336631307156,
+    "n_units_l2": 25,
+    "dropout_l2": 0.08266737664565811,
+    "n_units_l3": 9,
+    "dropout_l3": 0.14446723137884201,
+    "lr": 0.008458413004356744
+}
+'''
+
+class RainClassifier(nn.Module):
+    def __init__(self):
+      super().__init__()
+      
+      self.lin1 = nn.Linear(in_features = 15, out_features = 4)
+      self.relu1 = nn.ReLU()
+      self.drop1 = nn.Dropout(0.45)
+      self.lin2 = nn.Linear(in_features = 4, out_features = 12)
+      self.relu2 = nn.ReLU()
+      self.drop2 = nn.Dropout(0.45)
+      self.lin3 = nn.Linear(in_features = 12, out_features = 25)
+      self.relu3 = nn.ReLU()
+      self.drop3 = nn.Dropout(0.085)
+      self.lin4 = nn.Linear(in_features = 25, out_features = 9)
+      self.relu4 = nn.ReLU()
+      self.drop4 = nn.Dropout(0.145)
+      self.lin5 = nn.Linear(in_features = 9, out_features = 1)
+
+    def forward(self, x):
+      x = self.lin1(x)
+      x = self.relu1(x)
+      x = self.drop1(x)
+      x = self.lin2(x)
+      x = self.relu2(x)
+      x = self.drop2(x)
+      x = self.lin3(x)
+      x = self.relu3(x)
+      x = self.drop3(x)
+      x = self.lin4(x)
+      x = self.relu4(x)
+      x = self.drop4(x)
+      x = self.lin5(x)
+      return x
