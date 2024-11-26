@@ -44,15 +44,18 @@ class WeekTrigonometricEncoder(BaseEstimator, TransformerMixin):
     return X
   
 class CustomPowerTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self,cols, method='yeo-johnson', standardize=True):
+    def __init__(self,cols, method='yeo-johnson', standardize=True, copy = True):
       self.cols = cols
       self.method = method
       self.standardize = standardize
       self.scaler = None
+      self.copy = copy
+
 
     def fit(self, X, y=None):
       self.scaler = PowerTransformer(method=self.method, standardize=self.standardize, copy=self.copy)
-      self.scaler.fit(X)
+      self.scaler.fit(X[self.cols])
+      return self
       
     def transform(self, X):
       df = X.copy()
@@ -84,13 +87,14 @@ def WindGustTrigonometricEncoder(X):
     df.drop(columns = ['WindGustDir'], axis = 1)
     return df
 
+
 def impute_cloud_toapply(row):
-    if pd.isnull(row['Cloud9am']) and pd.isnull(row['Cloud3pm']):
+    if pd.isna(row['Cloud9am']) and pd.isna(row['Cloud3pm']):
         row['Cloud9am'] = 1 if row['RainToday'] == 0 else 7
         row['Cloud3pm'] = 1 if row['RainToday'] == 0 else 7
     elif pd.isnull(row['Cloud9am']):
         row['Cloud9am'] = row['Cloud3pm']
-    else:
+    elif pd.isna(row['Cloud3pm']):
         row['Cloud3pm'] = row['Cloud9am']
     return row
 
@@ -99,6 +103,7 @@ def impute_scale_cloud(X):
   X = X.apply(impute_cloud_toapply, axis = 1)
   X['Cloud9am'] /= 8
   X['Cloud3pm'] /= 8
+  return X
 
 '''
 best_params = {
@@ -114,23 +119,22 @@ best_params = {
     "lr": 0.008458413004356744
 }
 '''
-
 class RainClassifier(nn.Module):
     def __init__(self):
       super().__init__()
       
       self.lin1 = nn.Linear(in_features = 15, out_features = 4)
       self.relu1 = nn.ReLU()
-      self.drop1 = nn.Dropout(0.45)
+      self.drop1 = nn.Dropout(0.4398398657839898)
       self.lin2 = nn.Linear(in_features = 4, out_features = 12)
       self.relu2 = nn.ReLU()
-      self.drop2 = nn.Dropout(0.45)
+      self.drop2 = nn.Dropout(0.4571336631307156)
       self.lin3 = nn.Linear(in_features = 12, out_features = 25)
       self.relu3 = nn.ReLU()
-      self.drop3 = nn.Dropout(0.085)
+      self.drop3 = nn.Dropout(0.08266737664565811)
       self.lin4 = nn.Linear(in_features = 25, out_features = 9)
       self.relu4 = nn.ReLU()
-      self.drop4 = nn.Dropout(0.145)
+      self.drop4 = nn.Dropout(0.14446723137884201)
       self.lin5 = nn.Linear(in_features = 9, out_features = 1)
 
     def forward(self, x):
@@ -148,3 +152,8 @@ class RainClassifier(nn.Module):
       x = self.drop4(x)
       x = self.lin5(x)
       return x
+
+
+def debug(X):
+   print(X)
+   return X

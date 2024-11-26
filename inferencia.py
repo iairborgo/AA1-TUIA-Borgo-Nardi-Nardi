@@ -1,11 +1,14 @@
 import argparse
-#from pipeline_tools import *
+from pipeline_tools import *
 import os
 import time
 import pandas as pd
+import joblib
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path)
+
+pipeline = joblib.load('pipeline_final.pkl')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-f', '--file', type = str)
@@ -18,4 +21,10 @@ try:
     print('god no')
 except:
     print('no god')
-time.sleep(5)
+
+predicts = pd.DataFrame(pipeline.predict(df))
+
+predicts.to_csv('predicts')
+
+print('Predicciones guardadas en predict.csv')
+time.sleep(3)
