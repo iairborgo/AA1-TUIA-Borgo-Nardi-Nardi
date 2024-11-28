@@ -1,0 +1,9 @@
+.git/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.vscode/
+TP_regresion_AA1.ipynb
+TP-clasificacion-AA1.ipynb
+weatherAUS.csv

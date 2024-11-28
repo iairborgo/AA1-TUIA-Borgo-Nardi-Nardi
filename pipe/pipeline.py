@@ -2,11 +2,8 @@ import pandas as pd
 import random
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import RandomOverSampler
-from sklearn.impute import KNNImputer
 from sklearn.pipeline import Pipeline, FunctionTransformer
-from pipeline_tools import *
-from skorch import NeuralNetBinaryClassifier
-import torch.optim as optim
+from pipe.pipeline_tools import *
 import joblib
 
 df = pd.read_csv('weatherAUS.csv')
@@ -31,18 +28,7 @@ X_train, y_train = ros.fit_resample(X_train, y_train)
 
 drop = ['Location', 'WindGustDir', 'Temp3pm', 'Temp9am', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'WindDir9am', 'WindDir3pm', 'Pressure9am']
 power_cols = ['MinTemp', 'MaxTemp', 'Rainfall', 'Evaporation', 'WindGustSpeed','Humidity9am', 'Humidity3pm', 'Pressure3pm']
-
-model = NeuralNetBinaryClassifier(
-    RainClassifier,
-    criterion=torch.nn.BCEWithLogitsLoss,
-    optimizer=torch.optim.Adam,
-    lr=0.008458413004356744,
-    max_epochs=50,
-    batch_size=128,
-    verbose=False,
-    train_split=None
-)
-model.initialize()
+knn_cols = power_cols + ['sin_week', 'cos_week', 'WindGustDir_cos','WindGustDir_sin']
 
 transform_pipeline = Pipeline(steps=[
     ('binarize_rain', BinaryEncoder('RainToday')),
@@ -52,19 +38,9 @@ transform_pipeline = Pipeline(steps=[
     ('impute_scale_cloud', FunctionTransformer(impute_scale_cloud)),
     ('drop', FunctionTransformer(drop_columns, kw_args={'columns': drop})),
     ('custom_power_transform', CustomPowerTransformer(cols = power_cols)), 
-    ('print_debug', FunctionTransformer(debug)),
-    ('knn_imputer', KNNImputer(n_neighbors=155)),
-    ('float32', FunctionTransformer(func=lambda X: torch.tensor(X, dtype=torch.float32).numpy(), validate=False)),
-    ('model', model)
+    ('knn_imputer', CustomKNNImputer(n_neighbors=155, cols = knn_cols)),
 ])
 
-y_train = y_train.apply(lambda X: 1 if X=='Yes' else 0)
-#y_train_tensor = torch.tensor(y_train.values, dtype=torch.float32)
-transform_pipeline.fit(X_train, y_train)
+transform_pipeline.fit(X_train)
 
-
-y_test = y_test.apply(lambda X: 1 if X=='Yes' else 0)
-y_test.sum()
-from sklearn.metrics import classification_report
-y_pred = transform_pipeline.predict(X_test)
-print(classification_report(y_test, y_pred))
+joblib.dump(transform_pipeline, 'pipeline_final.pkl')
