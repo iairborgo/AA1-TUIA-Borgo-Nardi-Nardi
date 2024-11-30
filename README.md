@@ -6,8 +6,11 @@ Descarga de Imagen:
         docker pull iairborgo/aa_borgonardix2:latest
 
 Correr imagen:
-        docker run -v "path/a/archivo:/app/data"  iairborgo/aa-borgonardix2 --f < app/data/nombre_archivo.csv >
-
+        docker run -v "path/a/archivo:/app/data"  iairborgo/aa-borgonardix2 -f < /app/data/nombre_archivo.csv >
+Importante:
+El contenedor es ejecutado en linux, y windows puede ser que interprete los path con '\' por lo que se usaría 
+        docker run -v "path\a\archivo:/app/data"  iairborgo/aa-borgonardix2 -f < /app/data/nombre_archivo.csv >
+        
 Uso del script python:
     python inferencia.py --f < nombre_archivo >
 
